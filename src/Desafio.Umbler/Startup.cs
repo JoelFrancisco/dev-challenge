@@ -1,5 +1,7 @@
 ﻿using System;
 using Desafio.Umbler.Models;
+using Desafio.Umbler.Models.Lookup;
+using Desafio.Umbler.Models.WhoIs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -22,25 +24,27 @@ namespace Desafio.Umbler
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-                var connectionString = Configuration.GetConnectionString("DefaultConnection");
+            var connectionString = Configuration.GetConnectionString("DefaultConnection");
 
-                // Replace with your server version and type.
-                // Use 'MariaDbServerVersion' for MariaDB.
-                // Alternatively, use 'ServerVersion.AutoDetect(connectionString)'.
-                // For common usages, see pull request #1233.
-                var serverVersion = new MySqlServerVersion(new Version(8, 0, 27));
+            // Replace with your server version and type.
+            // Use 'MariaDbServerVersion' for MariaDB.
+            // Alternatively, use 'ServerVersion.AutoDetect(connectionString)'.
+            // For common usages, see pull request #1233.
+            var serverVersion = new MySqlServerVersion(new Version(8, 0, 27));
 
-                // Replace 'YourDbContext' with the name of your own DbContext derived class.
-                services.AddDbContext<DatabaseContext>(
-                    dbContextOptions => dbContextOptions
-                        .UseMySql(connectionString, serverVersion)
-                        // The following three options help with debugging, but should
-                        // be changed or removed for production.
-                        .LogTo(Console.WriteLine, LogLevel.Information)
-                        .EnableSensitiveDataLogging()
-                        .EnableDetailedErrors()
-                );
+            // Replace 'YourDbContext' with the name of your own DbContext derived class.
+            services.AddDbContext<DatabaseContext>(
+                dbContextOptions => dbContextOptions
+                    .UseMySql(connectionString, serverVersion)
+                    // The following three options help with debugging, but should
+                    // be changed or removed for production.
+                    .LogTo(Console.WriteLine, LogLevel.Information)
+                    .EnableSensitiveDataLogging()
+                    .EnableDetailedErrors()
+            );
 
+            services.AddScoped<IWhoIs, WhoIs>();
+            services.AddScoped<ILookup, Lookup>();
 
             services.AddControllersWithViews();
         }

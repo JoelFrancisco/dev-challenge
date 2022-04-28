@@ -1,5 +1,6 @@
 using Desafio.Umbler.Controllers;
 using Desafio.Umbler.Models;
+using Desafio.Umbler.Models.WhoIs;
 using DnsClient;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -64,18 +65,16 @@ namespace Desafio.Umbler.Test
             }
 
             // Use a clean instance of the context to run the test
-            using (var db = new DatabaseContext(options))
-            {
-                var controller = new DomainController(db);
+            using var db = new DatabaseContext(options);
+            var controller = new DomainController(db);
 
-                //act
-                var response = controller.Get("test.com");
-                var result = response.Result as OkObjectResult;
-                var obj = result.Value as Domain;
-                Assert.AreEqual(obj.Id, domain.Id);
-                Assert.AreEqual(obj.Ip, domain.Ip);
-                Assert.AreEqual(obj.Name, domain.Name);
-            }
+            //act
+            var response = controller.Get("test.com");
+            var result = response.Result as OkObjectResult;
+            var obj = result.Value as Domain;
+            Assert.AreEqual(obj.Id, domain.Id);
+            Assert.AreEqual(obj.Ip, domain.Ip);
+            Assert.AreEqual(obj.Name, domain.Name);
         }
 
         [TestMethod]
@@ -109,23 +108,24 @@ namespace Desafio.Umbler.Test
             var dnsResponse = new Mock<IDnsQueryResponse>();
             lookupClient.Setup(l => l.QueryAsync(domainName, QueryType.ANY, QueryClass.IN, System.Threading.CancellationToken.None)).ReturnsAsync(dnsResponse.Object);
 
+            var whoIsClient = new Mock<IWhoIs>();
+            whoIsClient.Setup(l => l.QueryAsync(domainName)).ReturnsAsync(dnsResponse.Object);
+
             //arrange 
             var options = new DbContextOptionsBuilder<DatabaseContext>()
                 .UseInMemoryDatabase(databaseName: "Find_searches_url")
                 .Options;
 
             // Use a clean instance of the context to run the test
-            using (var db = new DatabaseContext(options))
-            {
-                //inject lookupClient in controller constructor
-                var controller = new DomainController(db/*,IWhoisClient, lookupClient*/ );
+            using var db = new DatabaseContext(options);
+            //inject lookupClient in controller constructor
+            var controller = new DomainController(db)/*,IWhoisClient, lookupClient*/ );
 
-                //act
-                var response = controller.Get("test.com");
-                var result = response.Result as OkObjectResult;
-                var obj = result.Value as Domain;
-                Assert.IsNotNull(obj);
-            }
+            //act
+            var response = controller.Get("test.com");
+            var result = response.Result as OkObjectResult;
+            var obj = result.Value as Domain;
+            Assert.IsNotNull(obj);
         }
 
         [TestMethod]
